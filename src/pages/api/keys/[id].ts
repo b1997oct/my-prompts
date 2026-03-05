@@ -3,12 +3,18 @@ import connectToDatabase from "@/lib/mongodb/connect";
 import { User, ApiKey } from "@/models";
 import { adminAuth } from "@/server/firebaseAdmin";
 
+const json = (body: object, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { "Content-Type": "application/json" },
+  });
+
 export const PATCH: APIRoute = async ({ params, request }) => {
   try {
     const { id } = params;
     const authHeader = request.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ ok: false, error: "Unauthorized" }), { status: 401 });
+      return json({ ok: false, error: "Unauthorized" }, 401);
     }
 
     const { isActive } = await request.json();
@@ -20,7 +26,7 @@ export const PATCH: APIRoute = async ({ params, request }) => {
     await connectToDatabase();
     const user = await User.findOne({ firebaseUid });
     if (!user) {
-      return new Response(JSON.stringify({ ok: false, error: "User not found" }), { status: 404 });
+      return json({ ok: false, error: "User not found" }, 404);
     }
 
     const result = await ApiKey.findOneAndUpdate(
@@ -28,13 +34,13 @@ export const PATCH: APIRoute = async ({ params, request }) => {
       { isActive },
       { new: true }
     );
-    
+
     if (!result) {
-      return new Response(JSON.stringify({ ok: false, error: "API Key not found or unauthorized" }), { status: 404 });
+      return json({ ok: false, error: "API Key not found or unauthorized" }, 404);
     }
 
-    return new Response(JSON.stringify({ ok: true, key: result }), { status: 200 });
+    return json({ ok: true, key: result });
   } catch (error: any) {
-    return new Response(JSON.stringify({ ok: false, error: error.message }), { status: 500 });
+    return json({ ok: false, error: error.message }, 500);
   }
 };

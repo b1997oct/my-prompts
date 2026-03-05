@@ -23,6 +23,19 @@ export const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<StatusFilterType>("all");
 
+  const parseJsonResponse = async (response: Response) => {
+    const text = await response.text();
+    try {
+      return text ? JSON.parse(text) : null;
+    } catch {
+      throw new Error(
+        text?.startsWith("Cross-site") || text?.toLowerCase().includes("forgery")
+          ? "Server blocked the request (CORS/security). Ensure the app and API are on the same origin after deploy."
+          : "Server returned invalid JSON. Response: " + (text?.slice(0, 80) || response.statusText)
+      );
+    }
+  };
+
   const fetchApiKeys = async () => {
     if (!user) return;
     setLoading(true);
@@ -34,11 +47,11 @@ export const Dashboard: React.FC = () => {
           Authorization: `Bearer ${idToken}`,
         },
       });
-      const data = await response.json();
-      if (data.ok) {
-        setApiKeys(data.keys);
+      const data = await parseJsonResponse(response);
+      if (data?.ok) {
+        setApiKeys(data.keys ?? []);
       } else {
-        console.error("Failed to fetch keys:", data.error);
+        console.error("Failed to fetch keys:", data?.error);
       }
     } catch (error) {
       console.error("Error fetching API keys:", error);
@@ -53,7 +66,6 @@ export const Dashboard: React.FC = () => {
 
   const generateApiKey = async () => {
     if (!user) return;
-
     try {
       const idToken = await user.getIdToken();
       const response = await fetch("/api/keys", {
@@ -62,14 +74,14 @@ export const Dashboard: React.FC = () => {
           Authorization: `Bearer ${idToken}`,
         },
       });
-      const data = await response.json();
-      if (data.ok) {
+      const data = await parseJsonResponse(response);
+      if (data?.ok) {
         setApiKeys([data.key, ...apiKeys]);
       } else {
-        alert("Error generating API key: " + data.error);
+        alert("Error generating API key: " + (data?.error ?? response.statusText));
       }
-    } catch (error: any) {
-      alert("Error generating API key: " + error.message);
+    } catch (err: any) {
+      alert("Error generating API key: " + err.message);
     }
   };
 
@@ -86,14 +98,14 @@ export const Dashboard: React.FC = () => {
         },
         body: JSON.stringify({ isActive }),
       });
-      const data = await response.json();
-      if (data.ok) {
+      const data = await parseJsonResponse(response);
+      if (data?.ok) {
         setApiKeys(apiKeys.map(k => k._id === apiKeyId ? data.key : k));
       } else {
-        alert("Error updating API key status: " + data.error);
+        alert("Error updating API key status: " + (data?.error ?? response.statusText));
       }
-    } catch (error: any) {
-      alert("Error updating API key status: " + error.message);
+    } catch (err: any) {
+      alert("Error updating API key status: " + err.message);
     }
   };
 
