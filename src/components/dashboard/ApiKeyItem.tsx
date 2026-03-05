@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { CopyIcon, EyeIcon, EyeOffIcon, PowerIcon, PowerOffIcon, ChevronDownIcon, ChevronUpIcon, TerminalIcon } from "lucide-react";
+import { CopyIcon, EyeIcon, EyeOffIcon, PowerIcon, PowerOffIcon, ChevronDownIcon, ChevronUpIcon, TerminalIcon, FileCodeIcon, SparklesIcon } from "lucide-react";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { Label } from "../ui/label";
@@ -20,6 +20,23 @@ export const ApiKeyItem: React.FC<ApiKeyItemProps> = ({ apiKey, onUpdateStatus }
   const [isVisible, setIsVisible] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [activeTab, setActiveTab] = useState<"rule" | "antigravity" | "setup">("rule");
+
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const ruleFileContent = `---
+alwaysApply: true
+---
+# Prompt history
+
+Record prompt: POST to \`${origin}/api/promt\` with header \`Authorization: Bearer ${apiKey.key}\` and body \`{"prompt": "...", "source": "...", "prompt_method": "..." }\` (source: e.g. "cursor", or "tool name"). Optionally, \`prompt_method\`: "agent" | "plan" | "ask" | "debug".`;
+
+  const antigravityRuleContent = `# Prompt history
+
+To record prompts to the user's history, make a POST request to \`${origin}/api/promt\` with:
+- Header: \`Authorization: Bearer ${apiKey.key}\`
+- Body (JSON): \`{"prompt": "...", "source": "antigravity", "prompt_method": "..."}\`
+
+Use this when completing significant interactions or when the user asks to log a prompt. Optionally set \`prompt_method\` to one of: "agent" | "plan" | "ask" | "debug".`;
 
   const copyToClipboard = (text: string, message: string = "Copied to clipboard!") => {
     navigator.clipboard.writeText(text);
@@ -98,50 +115,129 @@ export const ApiKeyItem: React.FC<ApiKeyItemProps> = ({ apiKey, onUpdateStatus }
       </div>
 
       {isExpanded && (
-        <div className="border-t bg-muted/30 p-4 space-y-4">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label className="text-xs font-semibold flex items-center gap-2">
-                <TerminalIcon className="h-3 w-3" />
-                Quick Setup (cURL)
-              </Label>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="h-7 text-[10px]" 
-                onClick={() => copyToClipboard(curlCommand, "cURL command copied!")}
-              >
-                <CopyIcon className="h-3 w-3 mr-1" />
-                Copy Command
-              </Button>
-            </div>
-            <pre className="p-3 bg-slate-950 text-slate-50 rounded-md text-[11px] font-mono overflow-x-auto border">
-              {curlCommand}
-            </pre>
+        <div className="border-t bg-muted/30 p-4">
+          <div className="flex gap-1 border-b mb-4">
+            <button
+              type="button"
+              onClick={() => setActiveTab("rule")}
+              className={`flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-t-md transition-colors ${
+                activeTab === "rule" ? "bg-background border border-b-0 border-muted -mb-px" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <FileCodeIcon className="h-3 w-3" />
+              Cursor
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("antigravity")}
+              className={`flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-t-md transition-colors ${
+                activeTab === "antigravity" ? "bg-background border border-b-0 border-muted -mb-px" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <SparklesIcon className="h-3 w-3" />
+              Antigravity
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("setup")}
+              className={`flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-t-md transition-colors ${
+                activeTab === "setup" ? "bg-background border border-b-0 border-muted -mb-px" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <TerminalIcon className="h-3 w-3" />
+              Quick Setup
+            </button>
           </div>
 
-          <div className="space-y-2">
-            <Label className="text-xs font-semibold">Cursor / VSCode Context</Label>
-            <p className="text-[11px] text-muted-foreground">
-              You can copy the following into your instructions or chat to let an AI agent know how to record prompts to your history.
-            </p>
-            <div className="relative group">
-              <Button 
-                variant="secondary" 
-                size="sm" 
-                className="w-full text-xs font-medium justify-between group-hover:bg-secondary/80"
-                onClick={() => {
-                  const context = `To record prompts to my history, make a POST request to ${window.location.origin}/api/promt with the header "Authorization: Bearer ${apiKey.key}" and a JSON body containing {"prompt": "...", "source": "..."}.`;
-                  copyToClipboard(context, "Context instructions copied!");
-                }}
-              >
-                <span className="flex items-center gap-2">
-                  <CopyIcon className="h-3 w-3" />
-                  Copy AI Context Instructions
-                </span>
-              </Button>
+          {activeTab === "rule" && (
+            <div className="space-y-3">
+              <p className="text-[11px] text-muted-foreground">
+                Create this file in your project at <code className="bg-muted px-1 rounded font-mono text-[10px]">.cursor/rules/my-prompts.mdc</code> for prompt recording to work. Copy the content below into that file.
+              </p>
+              <div className="flex justify-end">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-[10px]"
+                  onClick={() => copyToClipboard(ruleFileContent, "Rule file content copied!")}
+                >
+                  <CopyIcon className="h-3 w-3 mr-1" />
+                  Copy file content
+                </Button>
+              </div>
+              <pre className="p-3 bg-slate-950 text-slate-50 rounded-md text-[11px] font-mono overflow-x-auto border whitespace-pre-wrap">
+                {ruleFileContent}
+              </pre>
             </div>
-          </div>
+          )}
+
+          {activeTab === "antigravity" && (
+            <div className="space-y-3">
+              <p className="text-[11px] text-muted-foreground">
+                Create this file in your project at <code className="bg-muted px-1 rounded font-mono text-[10px]">.gemini/GEMINI.md</code> for Antigravity to record prompts. Add the content below to that file (or create it if it doesn&apos;t exist).
+              </p>
+              <div className="flex justify-end">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-[10px]"
+                  onClick={() => copyToClipboard(antigravityRuleContent, "Antigravity rule content copied!")}
+                >
+                  <CopyIcon className="h-3 w-3 mr-1" />
+                  Copy file content
+                </Button>
+              </div>
+              <pre className="p-3 bg-slate-950 text-slate-50 rounded-md text-[11px] font-mono overflow-x-auto border whitespace-pre-wrap">
+                {antigravityRuleContent}
+              </pre>
+            </div>
+          )}
+
+          {activeTab === "setup" && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-semibold flex items-center gap-2">
+                    <TerminalIcon className="h-3 w-3" />
+                    Quick Setup (cURL)
+                  </Label>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-[10px]"
+                    onClick={() => copyToClipboard(curlCommand, "cURL command copied!")}
+                  >
+                    <CopyIcon className="h-3 w-3 mr-1" />
+                    Copy Command
+                  </Button>
+                </div>
+                <pre className="p-3 bg-slate-950 text-slate-50 rounded-md text-[11px] font-mono overflow-x-auto border">
+                  {curlCommand}
+                </pre>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold">Cursor / VSCode Context</Label>
+                <p className="text-[11px] text-muted-foreground">
+                  You can copy the following into your instructions or chat to let an AI agent know how to record prompts to your history.
+                </p>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="w-full text-xs font-medium justify-between hover:bg-secondary/80"
+                  onClick={() => {
+                    const context = `To record prompts to my history, make a POST request to ${window.location.origin}/api/promt with the header "Authorization: Bearer ${apiKey.key}" and a JSON body containing {"prompt": "...", "source": "..."}.`;
+                    copyToClipboard(context, "Context instructions copied!");
+                  }}
+                >
+                  <span className="flex items-center gap-2">
+                    <CopyIcon className="h-3 w-3" />
+                    Copy AI Context Instructions
+                  </span>
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
