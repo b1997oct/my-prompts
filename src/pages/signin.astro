@@ -1,0 +1,10 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { SignInPage } from "../components/auth/SignInPage";
+---
+
+<Layout title="Sign In">
+	<main class="flex items-center justify-center min-h-screen p-4">
+		<SignInPage client:load />
+	</main>
+</Layout>

@@ -1,0 +1,10 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { PromptsPage } from "../components/dashboard/PromptsPage";
+---
+
+<Layout title="Recorded Prompts">
+	<main class="min-h-screen bg-muted/30">
+		<PromptsPage client:load />
+	</main>
+</Layout>

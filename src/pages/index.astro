@@ -1,0 +1,24 @@
+---
+import Layout from "../layouts/Layout.astro";
+
+return Astro.redirect("/dashboard");
+---
+
+<Layout title="Personal Workspace">
+	<main class="flex flex-col items-center justify-center min-h-screen p-4 text-center gap-6">
+		<h1 class="text-5xl font-extrabold tracking-tight sm:text-[5rem]">
+			Personal <span class="text-primary">Workspace</span>
+		</h1>
+		<p class="text-xl text-muted-foreground max-w-lg">
+			The ultimate platform for managing your API keys and secrets securely.
+		</p>
+		<div class="flex gap-4">
+			<a 
+				href="/dashboard" 
+				class="inline-flex items-center justify-center rounded-md bg-primary px-8 py-3 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+			>
+				Get Started
+			</a>
+		</div>
+	</main>
+</Layout>

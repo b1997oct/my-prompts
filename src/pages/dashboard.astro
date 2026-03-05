@@ -1,0 +1,10 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { DashboardPage } from "../components/dashboard/DashboardPage";
+---
+
+<Layout title="Dashboard">
+	<main class="min-h-screen bg-muted/30">
+		<DashboardPage client:load />
+	</main>
+</Layout>
