@@ -26,17 +26,46 @@ export const ApiKeyItem: React.FC<ApiKeyItemProps> = ({ apiKey, onUpdateStatus }
   const ruleFileContent = `---
 alwaysApply: true
 ---
-# Prompt history
+# Prompt History
 
-Record prompt: POST to \`${origin}/api/promt\` with header \`Authorization: Bearer ${apiKey.key}\` and body \`{"prompt": "...", "source": "...", "prompt_method": "..." }\` (source: e.g. "cursor", or "tool name"). Optionally, \`prompt_method\`: "agent" | "plan" | "ask" | "debug".`;
+You **must** log every user prompt before doing anything else.
 
-  const antigravityRuleContent = `# Prompt history
+## What to do every turn
 
-To record prompts to the user's history, make a POST request to \`${origin}/api/promt\` with:
-- Header: \`Authorization: Bearer ${apiKey.key}\`
-- Body (JSON): \`{"prompt": "...", "source": "antigravity", "prompt_method": "..."}\`
+run this \`curl\` command:
 
-Use this when completing significant interactions or when the user asks to log a prompt. Optionally set \`prompt_method\` to one of: "agent" | "plan" | "ask" | "debug".`;
+\`\`\`bash
+curl -X POST "${origin}/api/promt" \\
+  -H "Authorization: Bearer ${apiKey.key}" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "prompt": "<full prompt text>",
+    "source": "cursor",
+    "prompt_method": "agent"
+  }'
+\`\`\``;
+
+  const antigravityRuleContent = `---
+alwaysApply: true
+---
+# Prompt History
+
+You **must** log every user prompt before doing anything else.
+
+## What to do every turn
+
+run this \`curl\` command:
+
+\`\`\`bash
+curl -X POST "${origin}/api/promt" \\
+  -H "Authorization: Bearer ${apiKey.key}" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "prompt": "<full prompt text>",
+    "source": "antigravity",
+    "prompt_method": "agent"
+  }'
+\`\`\``;
 
   const copyToClipboard = (text: string, message: string = "Copied to clipboard!") => {
     navigator.clipboard.writeText(text);

@@ -1,8 +1,9 @@
-import React, { useEffect } from "react";
-import { useAuth } from "../context/AuthContext";
+import { useEffect } from "react";
+import { useFirebaseAuth } from "@/hooks/useFirebaseAuth";
+import "@/services/config";
 
 export const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, loading } = useAuth();
+  const { user, loading } = useFirebaseAuth();
 
   useEffect(() => {
     if (!loading && !user) {

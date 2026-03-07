@@ -1,46 +1,26 @@
 import type { APIRoute } from "astro";
-import connectToDatabase from "@/lib/mongodb/connect";
-import { User, ApiKey } from "@/models";
-import { adminAuth } from "@/server/firebaseAdmin";
+import { ApiKey } from "@/models";
 
-const json = (body: object, status = 200) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { "Content-Type": "application/json" },
-  });
-
-export const PATCH: APIRoute = async ({ params, request }) => {
+export const PATCH: APIRoute = async ({ params, request, locals }) => {
   try {
     const { id } = params;
-    const authHeader = request.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return json({ ok: false, error: "Unauthorized" }, 401);
+    if (!locals.apiUserId) {
+      return Response.json({ ok: false, error: "API Key required" }, { status: 401 });
     }
 
     const { isActive } = await request.json();
-
-    const idToken = authHeader.slice("Bearer ".length).trim();
-    const decodedToken = await adminAuth.verifyIdToken(idToken);
-    const firebaseUid = decodedToken.uid;
-
-    await connectToDatabase();
-    const user = await User.findOne({ firebaseUid });
-    if (!user) {
-      return json({ ok: false, error: "User not found" }, 404);
-    }
-
     const result = await ApiKey.findOneAndUpdate(
-      { _id: id, user: user._id },
+      { _id: id, user: locals.apiUserId },
       { isActive },
       { new: true }
     );
 
     if (!result) {
-      return json({ ok: false, error: "API Key not found or unauthorized" }, 404);
+      return Response.json({ ok: false, error: "API Key not found or unauthorized" }, { status: 404 });
     }
 
-    return json({ ok: true, key: result });
+    return Response.json({ ok: true, key: result });
   } catch (error: any) {
-    return json({ ok: false, error: error.message }, 500);
+    return Response.json({ ok: false, error: error.message }, { status: 500 });
   }
 };

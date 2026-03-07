@@ -1,60 +1,34 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
-import { useAuth } from "@/context/AuthContext";
+import { useFirebaseAuth } from "@/hooks/useFirebaseAuth";
+import { createApiKey, listApiKeys, updateApiKey, type ApiKey } from "@/services/keys.service";
+import { getApiErrorMessage } from "@/services/config";
 import { Button } from "../ui/button";
 import { Card, CardHeader, CardTitle, CardDescription } from "../ui/card";
-import { Label } from "../ui/label";
 import { ApiKeyItem } from "./ApiKeyItem";
 import { LogOutIcon, PlusIcon, UserIcon, TerminalIcon, TableIcon, RefreshCwIcon, FilterIcon } from "lucide-react";
-
-interface ApiKey {
-  _id: string;
-  key: string;
-  createdAt: string;
-  isActive: boolean;
-}
 
 type StatusFilterType = "all" | "active" | "inactive";
 
 export const Dashboard: React.FC = () => {
-  const { user } = useAuth();
+  const { user } = useFirebaseAuth();
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<StatusFilterType>("all");
-
-  const parseJsonResponse = async (response: Response) => {
-    const text = await response.text();
-    try {
-      return text ? JSON.parse(text) : null;
-    } catch {
-      throw new Error(
-        text?.startsWith("Cross-site") || text?.toLowerCase().includes("forgery")
-          ? "Server blocked the request (CORS/security). Ensure the app and API are on the same origin after deploy."
-          : "Server returned invalid JSON. Response: " + (text?.slice(0, 80) || response.statusText)
-      );
-    }
-  };
 
   const fetchApiKeys = async () => {
     if (!user) return;
     setLoading(true);
     try {
-      const idToken = await user.getIdToken();
-      const statusParam = statusFilter !== "all" ? `?status=${statusFilter}` : "";
-      const response = await fetch(`/api/keys${statusParam}`, {
-        headers: {
-          Authorization: `Bearer ${idToken}`,
-        },
-      });
-      const data = await parseJsonResponse(response);
+      const data = await listApiKeys(statusFilter === "all" ? undefined : statusFilter);
       if (data?.ok) {
         setApiKeys(data.keys ?? []);
       } else {
         console.error("Failed to fetch keys:", data?.error);
       }
     } catch (error) {
-      console.error("Error fetching API keys:", error);
+      console.error("Error fetching API keys:", getApiErrorMessage(error, "Failed to fetch API keys"));
     } finally {
       setLoading(false);
     }
@@ -67,21 +41,14 @@ export const Dashboard: React.FC = () => {
   const generateApiKey = async () => {
     if (!user) return;
     try {
-      const idToken = await user.getIdToken();
-      const response = await fetch("/api/keys", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${idToken}`,
-        },
-      });
-      const data = await parseJsonResponse(response);
+      const data = await createApiKey();
       if (data?.ok) {
-        setApiKeys([data.key, ...apiKeys]);
+        setApiKeys((prev) => (data.key ? [data.key, ...prev] : prev));
       } else {
-        alert("Error generating API key: " + (data?.error ?? response.statusText));
+        alert("Error generating API key: " + (data?.error ?? "Unknown error"));
       }
-    } catch (err: any) {
-      alert("Error generating API key: " + err.message);
+    } catch (error) {
+      alert("Error generating API key: " + getApiErrorMessage(error, "Failed to generate API key"));
     }
   };
 
@@ -89,29 +56,22 @@ export const Dashboard: React.FC = () => {
     if (!user) return;
 
     try {
-      const idToken = await user.getIdToken();
-      const response = await fetch(`/api/keys/${apiKeyId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${idToken}`,
-        },
-        body: JSON.stringify({ isActive }),
-      });
-      const data = await parseJsonResponse(response);
+      const data = await updateApiKey(apiKeyId, isActive);
       if (data?.ok) {
-        setApiKeys(apiKeys.map(k => k._id === apiKeyId ? data.key : k));
+        setApiKeys((prev) => prev.map((k) => (k._id === apiKeyId && data.key ? data.key : k)));
       } else {
-        alert("Error updating API key status: " + (data?.error ?? response.statusText));
+        alert("Error updating API key status: " + (data?.error ?? "Unknown error"));
       }
-    } catch (err: any) {
-      alert("Error updating API key status: " + err.message);
+    } catch (error) {
+      alert("Error updating API key status: " + getApiErrorMessage(error, "Failed to update API key"));
     }
   };
 
   const handleLogout = async () => {
     try {
       await signOut(auth);
+      localStorage.removeItem("apiToken");
+      localStorage.removeItem("token");
       window.location.href = "/signin";
     } catch (error: any) {
       alert("Error logging out: " + error.message);

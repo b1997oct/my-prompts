@@ -1,6 +1,8 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import { ArrowLeftIcon, TerminalIcon, RocketIcon } from "lucide-react";
+
+const origin = Astro.url.origin.includes('localhost') ? 'https://my-prompts-beta.vercel.app' : Astro.url.origin;
 ---
 
 <Layout title="API Documentation">
@@ -47,7 +49,7 @@ import { ArrowLeftIcon, TerminalIcon, RocketIcon } from "lucide-react";
 				<div class="space-y-4">
 					<h3 class="text-lg font-semibold">Endpoint</h3>
 					<div class="bg-muted p-3 rounded-lg font-mono text-sm border">
-						POST {Astro.url.origin}/api/promt
+						POST {origin}/api/promt
 					</div>
 				</div>
 
@@ -66,7 +68,7 @@ import { ArrowLeftIcon, TerminalIcon, RocketIcon } from "lucide-react";
 				<div class="space-y-4">
 					<h3 class="text-lg font-semibold">Example: cURL</h3>
 					<div class="bg-muted p-4 rounded-lg font-mono text-sm border overflow-x-auto whitespace-pre">
-curl -X POST {Astro.url.origin}/api/promt \
+curl -X POST {origin}/api/promt \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_ID_TOKEN" \
   -d '{`{
@@ -79,7 +81,7 @@ curl -X POST {Astro.url.origin}/api/promt \
 				<div class="space-y-4">
 					<h3 class="text-lg font-semibold">Example: Fetch (JavaScript)</h3>
 					<div class="bg-muted p-4 rounded-lg font-mono text-sm border overflow-x-auto whitespace-pre">
-fetch("{Astro.url.origin}/api/promt", &#123;
+fetch("{origin}/api/promt", &#123;
   method: "POST",
   headers: &#123;
     "Content-Type": "application/json",

@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useMemo } from "react";
 import moment  from "moment";
-import { useAuth } from "@/context/AuthContext";
+import { useFirebaseAuth } from "@/hooks/useFirebaseAuth";
+import { deletePromptById, listPrompts, type Prompt } from "@/services/prompts.service";
+import { getApiErrorMessage } from "@/services/config";
 import { Button } from "../ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../ui/card";
 import { Input } from "../ui/input";
@@ -8,21 +10,10 @@ import { Label } from "../ui/label";
 import { cn } from "@/lib/utils";
 import { ArrowLeftIcon, ExternalLinkIcon, RefreshCwIcon, FilterIcon, XIcon, Trash2Icon } from "lucide-react";
 
-interface Prompt {
-  _id: string;
-  prompt: string;
-  source?: string;
-  tokenId?: string;
-  is_delete?: boolean;
-  email?: string;
-  createdAt: string;
-  meta?: Record<string, any>;
-}
-
 type DateRangeType = "all" | "1D" | "7D" | "custom";
 
 export const PromptsTable: React.FC = () => {
-  const { user } = useAuth();
+  const { user } = useFirebaseAuth();
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -40,21 +31,14 @@ export const PromptsTable: React.FC = () => {
     setError(null);
 
     try {
-      const idToken = await user.getIdToken();
-      const response = await fetch("/api/promt", {
-        headers: {
-          Authorization: `Bearer ${idToken}`,
-        },
-      });
-
-      const data = await response.json();
+      const data = await listPrompts();
       if (data.ok) {
-        setPrompts(data.prompts);
+        setPrompts(data.prompts ?? []);
       } else {
         setError(data.error || "Failed to fetch prompts");
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(getApiErrorMessage(err, "Failed to fetch prompts"));
     } finally {
       setLoading(false);
     }
@@ -64,22 +48,14 @@ export const PromptsTable: React.FC = () => {
     if (!user || !confirm("Are you sure you want to delete this prompt?")) return;
 
     try {
-      const idToken = await user.getIdToken();
-      const response = await fetch(`/api/promt/${id}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${idToken}`,
-        },
-      });
-
-      const data = await response.json();
+      const data = await deletePromptById(id);
       if (data.ok) {
         setPrompts(prev => prev.filter(p => p._id !== id));
       } else {
         alert(data.error || "Failed to delete prompt");
       }
-    } catch (err: any) {
-      alert("Error: " + err.message);
+    } catch (err) {
+      alert("Error: " + getApiErrorMessage(err, "Failed to delete prompt"));
     }
   };
 
@@ -148,7 +124,7 @@ export const PromptsTable: React.FC = () => {
 
       return true;
     });
-  }, [prompts, sourceFilter, dateRange, customStartDate, customEndDate]);
+  }, [prompts, sourceFilter, tokenFilter, dateRange, customStartDate, customEndDate]);
 
   const resetFilters = () => {
     setSourceFilter("all");

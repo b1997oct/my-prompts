@@ -1,9 +1,11 @@
 import React, { useState } from "react";
-import { 
+import {
   GoogleAuthProvider, 
   signInWithPopup,
 } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import { syncUser } from "@/services/auth.service";
+import { getApiErrorMessage } from "@/services/config";
 import { Button } from "../ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../ui/card";
 
@@ -11,22 +13,19 @@ export const SignInForm: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const createUserDocIfNeeded = async (user: any) => {
+  const createUserDocIfNeeded = async (idToken: string) => {
     try {
-      const idToken = await user.getIdToken();
-      const response = await fetch("/api/auth/sync", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${idToken}`,
-        },
-      });
-      const data = await response.json();
+      const data = await syncUser(idToken);
       if (!data.ok) {
         console.error("Failed to sync user to MongoDB:", data.error);
+        return;
+      }
+
+      if (data.token) {
+        localStorage.setItem("apiToken", data.token);
       }
     } catch (err) {
-      console.error("Error syncing user:", err);
+      console.error("Error syncing user:", getApiErrorMessage(err, "Failed to sync user"));
     }
   };
 
@@ -38,7 +37,8 @@ export const SignInForm: React.FC = () => {
     try {
       const userCredential = await signInWithPopup(auth, provider);
       console.log("[Auth] Google sign-in successful:", userCredential.user.uid);
-      await createUserDocIfNeeded(userCredential.user);
+      const idToken = await userCredential.user.getIdToken();
+      await createUserDocIfNeeded(idToken);
       console.log("[Firestore] User document synced successfully.");
       // Redirect to dashboard
       window.location.href = "/dashboard";
