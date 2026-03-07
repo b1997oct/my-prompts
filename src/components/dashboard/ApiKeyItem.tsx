@@ -129,7 +129,7 @@ curl -X POST "${origin}/api/promt" \\
             variant="ghost"
             size="sm"
             onClick={() => {
-              const url = `${origin}/prompts-data?token=${apiKey.key}`;
+              const url = `${origin}/prompt-samples?token=${apiKey.key}`;
               const prompt = `I am sharing a list of my recent AI prompts. Please analyze them and tell me how I'm doing. What are my strengths and weaknesses in prompt engineering? Where can I improve my communication style with AI to get better results? Are there any recurring patterns or mistakes I should be aware of?\n\nHere is the link to my prompt history:\n${url}`;
               copyToClipboard(prompt, "AI Analysis Prompt copied to clipboard!");
 
@@ -312,7 +312,7 @@ curl -X POST "${origin}/api/promt" \\
                     size="sm"
                     className="h-7 text-[10px]"
                     onClick={() => {
-                      const url = `${origin}/prompts-data?token=${apiKey.key}`;
+                      const url = `${origin}/prompt-samples?token=${apiKey.key}`;
                       const prompt = `I am sharing a list of my recent AI prompts. Please analyze them and tell me how I'm doing. What are my strengths and weaknesses in prompt engineering? Where can I improve my communication style with AI to get better results? Are there any recurring patterns or mistakes I should be aware of?\n\nHere is the link to my prompt history:\n${url}`;
                       copyToClipboard(prompt, "Analysis prompt copied!");
                     }}
@@ -325,7 +325,7 @@ curl -X POST "${origin}/api/promt" \\
                   "I am sharing a list of my recent AI prompts. Please analyze them and tell me how I'm doing. What are my strengths and weaknesses in prompt engineering? Where can I improve my communication style with AI to get better results? Are there any recurring patterns or mistakes I should be aware of?
                   <br /><br />
                   Here is the link to my prompt history:<br />
-                  <span className="font-mono text-[10px] text-primary">{origin}/prompts-data?token={apiKey.key}</span>"
+                  <span className="font-mono text-[10px] text-primary">{origin}/prompt-samples?token={apiKey.key}</span>"
                 </div>
               </div>
 

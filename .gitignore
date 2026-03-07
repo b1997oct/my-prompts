@@ -4,6 +4,7 @@ dist/
 .astro/
 
 .vercel
+.gemini
 # dependencies
 node_modules/
 
