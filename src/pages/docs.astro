@@ -1,32 +1,122 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import { ArrowLeftIcon, TerminalIcon, RocketIcon } from "lucide-react";
+import { getAiAnalysisPrompt } from "../lib/ai-analysis";
 
-const origin = Astro.url.origin.includes("localhost")
-	? "https://my-prompts-beta.vercel.app"
-	: Astro.url.origin;
+const origin = Astro.url.origin;
 ---
 
-<Layout title="API Documentation">
+<Layout title="AI Analysis & API Docs">
 	<div class="container mx-auto py-12 px-4 max-w-4xl">
 		<header class="mb-10 text-center">
 			<h1
 				class="text-4xl font-extrabold tracking-tight mb-2 flex items-center justify-center gap-3"
 			>
-				<RocketIcon className="h-8 w-8 text-primary" />
-				API Documentation
+				<div class="p-1 bg-purple-100 text-purple-700 rounded-lg">
+					<div class="h-8 w-8">✨</div>
+				</div>
+				Prompt Analysis & Evaluation
 			</h1>
 			<p class="text-muted-foreground text-lg">
-				How to record your prompts via the API
+				Get professional feedback and improve your prompt engineering
+				skills
 			</p>
 		</header>
 
 		<main class="space-y-12">
-			<!-- Section 1: Authentication -->
+			<!-- Section 1: AI Data Analysis -->
+			<section class="p-6 border rounded-xl bg-card space-y-6">
+
+				<p>
+					You can use your recorded prompt history to get professional
+					feedback from <strong>Gemini</strong> or <strong
+						>ChatGPT</strong
+					>. This helps you track your progress and improve your
+					prompt engineering skills.
+				</p>
+
+				<div class="space-y-4">
+					<h3 class="text-lg font-semibold">
+						1. Access Your Raw Data
+					</h3>
+					<p class="text-sm">
+						Open the data table in your browser using your API key:
+					</p>
+					<div
+						class="bg-muted p-3 rounded-lg font-mono text-sm border break-all"
+					>
+						{origin}/prompt-samples?token=YOUR_API_KEY
+					</div>
+					<p class="text-xs text-muted-foreground italic">
+						* Replace <code>YOUR_API_KEY</code> with a valid key from
+						your dashboard.
+					</p>
+				</div>
+
+				<div class="space-y-4">
+					<h3 class="text-lg font-semibold">
+						2. Analyze with Gemini or ChatGPT
+					</h3>
+					<p class="text-sm">
+						Copy the data from the table (or the page source) and
+						paste it into an AI chat with the following instruction:
+					</p>
+
+					<div
+						class="bg-primary/5 p-4 rounded-lg border-l-4 border-primary"
+					>
+						<p
+							class="font-bold text-xs uppercase tracking-wider text-primary mb-2"
+						>
+							Recommended Prompt
+						</p>
+						<p
+							class="text-sm italic leading-relaxed whitespace-pre-wrap"
+						>
+							{
+								getAiAnalysisPrompt(
+									`${origin}/prompt-samples?token=YOUR_API_KEY`,
+								)
+							}
+						</p>
+					</div>
+				</div>
+
+				<div class="space-y-4 pt-2">
+					<h3 class="text-sm font-semibold">What can you learn?</h3>
+					<ul
+						class="list-disc list-inside space-y-1 text-sm text-muted-foreground"
+					>
+						<li>
+							Clarity and precision levels of your instructions
+						</li>
+						<li>Efficiency of your prompt structure</li>
+						<li>Context optimization suggestions</li>
+						<li>
+							Personalized best practices based on your actual
+							usage
+						</li>
+					</ul>
+				</div>
+			</section>
+
+			<div class="pt-8 border-t text-center">
+				<h2
+					class="text-3xl font-bold tracking-tight mb-2 flex items-center justify-center gap-3"
+				>
+					<RocketIcon className="h-7 w-7 text-primary" />
+					API Documentation
+				</h2>
+				<p class="text-muted-foreground">
+					Integrating with your terminal, apps, and AI agents
+				</p>
+			</div>
+
+			<!-- Section 2: Authentication -->
 			<section class="p-6 border rounded-xl bg-card">
 				<h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
 					<TerminalIcon className="h-6 w-6" />
-					Authentication
+					1. Authentication
 				</h2>
 				<p class="mb-4">
 					All API requests must include your <strong
@@ -45,10 +135,10 @@ const origin = Astro.url.origin.includes("localhost")
 				</p>
 			</section>
 
-			<!-- Section 2: POST /api/promt -->
+			<!-- Section 3: POST /api/promt -->
 			<section class="space-y-6">
 				<div class="flex items-center justify-between border-b pb-2">
-					<h2 class="text-2xl font-bold">Record a Prompt</h2>
+					<h2 class="text-2xl font-bold">2. Record a Prompt</h2>
 					<span
 						class="px-2 py-1 bg-green-100 text-green-800 text-xs font-bold rounded uppercase"
 						>POST</span
@@ -112,86 +202,6 @@ const origin = Astro.url.origin.includes("localhost")
 						JSON.stringify(&#123; prompt: "I am a recorded prompt.",
 						source: "Web App" &#125;) &#125;)
 					</div>
-				</div>
-			</section>
-			<!-- Section 3: AI Data Analysis -->
-			<section class="p-6 border rounded-xl bg-card space-y-6">
-				<h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
-					<span class="p-1 bg-purple-100 text-purple-700 rounded-lg">
-						<div class="h-6 w-6 text-purple-700">✨</div>
-					</span>
-					AI Analysis & Evaluation
-				</h2>
-
-				<p>
-					You can use your recorded prompt history to get professional
-					feedback from <strong>Gemini</strong> or <strong
-						>ChatGPT</strong
-					>. This helps you track your progress and improve your
-					prompt engineering skills.
-				</p>
-
-				<div class="space-y-4">
-					<h3 class="text-lg font-semibold">
-						1. Access Your Raw Data
-					</h3>
-					<p class="text-sm">
-						Open the data table in your browser using your API key:
-					</p>
-					<div
-						class="bg-muted p-3 rounded-lg font-mono text-sm border break-all"
-					>
-						{origin}/prompt-samples?token=YOUR_API_KEY
-					</div>
-					<p class="text-xs text-muted-foreground italic">
-						* Replace <code>YOUR_API_KEY</code> with a valid key from
-						your dashboard.
-					</p>
-				</div>
-
-				<div class="space-y-4">
-					<h3 class="text-lg font-semibold">
-						2. Analyze with Gemini or ChatGPT
-					</h3>
-					<p class="text-sm">
-						Copy the data from the table (or the page source) and
-						paste it into an AI chat with the following instruction:
-					</p>
-
-					<div
-						class="bg-primary/5 p-4 rounded-lg border-l-4 border-primary"
-					>
-						<p
-							class="font-bold text-xs uppercase tracking-wider text-primary mb-2"
-						>
-							Recommended Prompt
-						</p>
-						<p class="text-sm italic leading-relaxed">
-							"I am sharing a list of my recent AI prompts. Please
-							analyze them and tell me how I'm doing. What are my
-							strengths and weaknesses in prompt engineering?
-							Where can I improve my communication style with AI
-							to get better results? Are there any recurring
-							patterns or mistakes I should be aware of?"
-						</p>
-					</div>
-				</div>
-
-				<div class="space-y-4 pt-2">
-					<h3 class="text-sm font-semibold">What can you learn?</h3>
-					<ul
-						class="list-disc list-inside space-y-1 text-sm text-muted-foreground"
-					>
-						<li>
-							Clarity and precision levels of your instructions
-						</li>
-						<li>Efficiency of your prompt structure</li>
-						<li>Context optimization suggestions</li>
-						<li>
-							Personalized best practices based on your actual
-							usage
-						</li>
-					</ul>
 				</div>
 			</section>
 		</main>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { getAiAnalysisPrompt, getGeminiUrl, getChatGptUrl } from "../../lib/ai-analysis";
 import { CopyIcon, EyeIcon, EyeOffIcon, PowerIcon, PowerOffIcon, ChevronDownIcon, ChevronUpIcon, TerminalIcon, FileCodeIcon, SparklesIcon } from "lucide-react";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
@@ -130,7 +131,7 @@ curl -X POST "${origin}/api/promt" \\
             size="sm"
             onClick={() => {
               const url = `${origin}/prompt-samples?token=${apiKey.key}`;
-              const prompt = `I am sharing a list of my recent AI prompts. Please analyze them and tell me how I'm doing. What are my strengths and weaknesses in prompt engineering? Where can I improve my communication style with AI to get better results? Are there any recurring patterns or mistakes I should be aware of?\n\nHere is the link to my prompt history:\n${url}`;
+              const prompt = getAiAnalysisPrompt(url);
               copyToClipboard(prompt, "AI Analysis Prompt copied to clipboard!");
 
               if (isExpanded && activeTab === "analytics") {
@@ -313,7 +314,7 @@ curl -X POST "${origin}/api/promt" \\
                     className="h-7 text-[10px]"
                     onClick={() => {
                       const url = `${origin}/prompt-samples?token=${apiKey.key}`;
-                      const prompt = `I am sharing a list of my recent AI prompts. Please analyze them and tell me how I'm doing. What are my strengths and weaknesses in prompt engineering? Where can I improve my communication style with AI to get better results? Are there any recurring patterns or mistakes I should be aware of?\n\nHere is the link to my prompt history:\n${url}`;
+                      const prompt = getAiAnalysisPrompt(url);
                       copyToClipboard(prompt, "Analysis prompt copied!");
                     }}
                   >
@@ -321,11 +322,8 @@ curl -X POST "${origin}/api/promt" \\
                     Copy Content
                   </Button>
                 </div>
-                <div className="p-3 bg-primary/5 border rounded-md text-[11px] leading-relaxed italic text-muted-foreground">
-                  "I am sharing a list of my recent AI prompts. Please analyze them and tell me how I'm doing. What are my strengths and weaknesses in prompt engineering? Where can I improve my communication style with AI to get better results? Are there any recurring patterns or mistakes I should be aware of?
-                  <br /><br />
-                  Here is the link to my prompt history:<br />
-                  <span className="font-mono text-[10px] text-primary">{origin}/prompt-samples?token={apiKey.key}</span>"
+                <div className="p-3 bg-primary/5 border rounded-md text-[11px] leading-relaxed italic text-muted-foreground whitespace-pre-wrap">
+                  {getAiAnalysisPrompt(`${origin}/prompt-samples?token=${apiKey.key}`)}
                 </div>
               </div>
 
@@ -333,7 +331,10 @@ curl -X POST "${origin}/api/promt" \\
                 <Button
                   variant="outline"
                   className="w-full text-xs gap-2 py-6 border-slate-200 hover:bg-slate-50"
-                  onClick={() => window.open('https://gemini.google.com/app', '_blank')}
+                  onClick={() => {
+                    const prompt = getAiAnalysisPrompt(`${origin}/prompt-samples?token=${apiKey.key}`);
+                    window.open(getGeminiUrl(prompt), '_blank');
+                  }}
                 >
                   <img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304fe6292a20ca2a.svg" className="h-4 w-4" alt="Gemini" />
                   Analyze with Gemini
@@ -341,7 +342,10 @@ curl -X POST "${origin}/api/promt" \\
                 <Button
                   variant="outline"
                   className="w-full text-xs gap-2 py-6 border-slate-200 hover:bg-slate-50"
-                  onClick={() => window.open('https://chatgpt.com', '_blank')}
+                  onClick={() => {
+                    const prompt = getAiAnalysisPrompt(`${origin}/prompt-samples?token=${apiKey.key}`);
+                    window.open(getChatGptUrl(prompt), '_blank');
+                  }}
                 >
                   <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5153-4.9066 6.0462 6.0462 0 0 0-3.9471-3.1202 6.0417 6.0417 0 0 0-6.1915 1.5432 6.0526 6.0526 0 0 0-4.6644-.0478 6.0417 6.0417 0 0 0-3.1246 3.9436 6.0502 6.0502 0 0 0-1.5544 6.1824 6.0502 6.0502 0 0 0 .5154 4.9066 6.0502 6.0502 0 0 0 3.9471 3.1202 6.0549 6.0549 0 0 0 6.1915-1.5433 6.0526 6.0526 0 0 0 4.6695.0478 6.0417 6.0417 0 0 0 3.1246-3.9436 6.0502 6.0502 0 0 0 1.5544-6.1824Zm-10.2819 11.433c-1.129 0-2.2274-.3165-3.1793-.913l.1158-.0661 2.3732-1.3546a.8252.8252 0 0 0 .4117-.7116v-3.3283l2.8464 1.6377a.066.066 0 0 1 .033.057v3.31a5.0315 5.0315 0 0 1-4.6008 1.3689Zm-7.9142-3.818a5.0118 5.0118 0 0 1-.5814-4.8143l.1197.0681 2.3732 1.3546a.8252.8252 0 0 0 .8235 0l2.8821-1.6575v3.2753a.066.066 0 0 1-.033.057l-2.8687 1.6515a5.0118 5.0118 0 0 1-2.7154.0642Zm-2.2816-9.6999a5.0315 5.0315 0 0 1 4.024-3.4453l-.004 1.1378v2.731a.8252.8252 0 0 0 .4118.7116l2.8821 1.6575-2.8464 1.6377a.066.066 0 0 1-.066 0l-2.8686-1.6515a5.0118 5.0118 0 0 1-1.533-3.0789Zm16.1011-.1449-.1158.0661-2.3732 1.3546a.8252.8252 0 0 0-.4117.7116v3.3283l-2.8464-1.6377a.066.066 0 0 1-.033-.057v-3.31a5.0315 5.0315 0 0 1 4.6008-1.3689Zm3.1793 4.2954a5.0118 5.0118 0 0 1 .5814 4.8143l-.1197-.0681-2.3732-1.3546a.8252.8252 0 0 0-.8235 0l-2.8821 1.6575v-3.2753a.066.066 0 0 1 .033-.057l2.8687-1.6515a5.0118 5.0118 0 0 1 2.7154-.0642Zm-3.2655 8.1652a5.0315 5.0315 0 0 1-4.024 3.4453l.004-1.1378v-2.731a.8252.8252 0 0 0-.4118-.7116l-2.8821-1.6575 2.8464-1.6377a.066.066 0 0 1 .066 0l2.8686 1.6515a5.0118 5.0118 0 0 1 1.533 3.0789ZM12 8.1258a3.875 3.875 0 1 0 0 7.75 3.875 3.875 0 0 0 0-7.75Z" /></svg>
                   Analyze with ChatGPT
