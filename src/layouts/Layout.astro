@@ -1,5 +1,6 @@
 ---
 import "../styles/global.css";
+import { Toaster } from "sonner";
 
 interface Props {
 	title: string;
@@ -19,6 +20,7 @@ const { title } = Astro.props;
 	</head>
 	<body>
 		<slot />
+		<Toaster client:load richColors position="top-right" closeButton />
 	</body>
 </html>
 

@@ -8,6 +8,7 @@ import { Button } from "../ui/button";
 import { Card, CardHeader, CardTitle, CardDescription } from "../ui/card";
 import { ApiKeyItem } from "./ApiKeyItem";
 import { LogOutIcon, PlusIcon, UserIcon, TerminalIcon, TableIcon, RefreshCwIcon, FilterIcon } from "lucide-react";
+import { toast } from "sonner";
 
 type StatusFilterType = "all" | "active" | "inactive";
 
@@ -45,12 +46,15 @@ export const Dashboard: React.FC = () => {
       const data = await createApiKey();
       if (data?.ok) {
         setApiKeys((prev) => (data.key ? [data.key, ...prev] : prev));
-        if (data.key) setLastGeneratedKeyId(data.key._id);
+        if (data.key) {
+          setLastGeneratedKeyId(data.key._id);
+          toast.success("API key generated successfully!");
+        }
       } else {
-        alert("Error generating API key: " + (data?.error ?? "Unknown error"));
+        toast.error("Error generating API key: " + (data?.error ?? "Unknown error"));
       }
     } catch (error) {
-      alert("Error generating API key: " + getApiErrorMessage(error, "Failed to generate API key"));
+      toast.error("Error generating API key: " + getApiErrorMessage(error, "Failed to generate API key"));
     }
   };
 
@@ -61,11 +65,12 @@ export const Dashboard: React.FC = () => {
       const data = await updateApiKey(apiKeyId, isActive);
       if (data?.ok) {
         setApiKeys((prev) => prev.map((k) => (k._id === apiKeyId && data.key ? data.key : k)));
+        toast.success(`API key ${isActive ? 'activated' : 'deactivated'} successfully!`);
       } else {
-        alert("Error updating API key status: " + (data?.error ?? "Unknown error"));
+        toast.error("Error updating API key status: " + (data?.error ?? "Unknown error"));
       }
     } catch (error) {
-      alert("Error updating API key status: " + getApiErrorMessage(error, "Failed to update API key"));
+      toast.error("Error updating API key status: " + getApiErrorMessage(error, "Failed to update API key"));
     }
   };
 
@@ -76,7 +81,7 @@ export const Dashboard: React.FC = () => {
       localStorage.removeItem("token");
       window.location.href = "/signin";
     } catch (error: any) {
-      alert("Error logging out: " + error.message);
+      toast.error("Error logging out: " + error.message);
     }
   };
 
@@ -95,12 +100,12 @@ export const Dashboard: React.FC = () => {
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => window.location.href = "/docs"} className="flex items-center gap-2">
-                <TerminalIcon className="h-4 w-4" />
-                API Docs
+              <TerminalIcon className="h-4 w-4" />
+              API Docs
             </Button>
             <Button variant="outline" onClick={handleLogout} className="flex items-center gap-2">
-                <LogOutIcon className="h-4 w-4" />
-                Logout
+              <LogOutIcon className="h-4 w-4" />
+              Logout
             </Button>
           </div>
         </CardHeader>
@@ -123,18 +128,18 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={fetchApiKeys} disabled={loading} className="flex items-center gap-2">
-                <RefreshCwIcon className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-                Refresh
-            </Button>
-            <Button variant="outline" onClick={() => window.location.href = "/prompts"} className="flex items-center gap-2">
-                <TableIcon className="h-4 w-4" />
-                View Prompts
-            </Button>
-            <Button onClick={generateApiKey} className="flex items-center gap-2">
-                <PlusIcon className="h-4 w-4" />
-                Generate New Key
-            </Button>
+          <Button variant="outline" onClick={fetchApiKeys} disabled={loading} className="flex items-center gap-2">
+            <RefreshCwIcon className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+          <Button variant="outline" onClick={() => window.location.href = "/prompts"} className="flex items-center gap-2">
+            <TableIcon className="h-4 w-4" />
+            View Prompts
+          </Button>
+          <Button onClick={generateApiKey} className="flex items-center gap-2">
+            <PlusIcon className="h-4 w-4" />
+            Generate New Key
+          </Button>
         </div>
       </div>
 
@@ -143,16 +148,16 @@ export const Dashboard: React.FC = () => {
           <div className="text-center py-12 text-muted-foreground">Loading API keys...</div>
         ) : apiKeys.length > 0 ? (
           apiKeys.map((key) => (
-            <ApiKeyItem 
-              key={key._id} 
-              apiKey={{ id: key._id, key: key.key, createdAt: key.createdAt, isActive: key.isActive }} 
+            <ApiKeyItem
+              key={key._id}
+              apiKey={{ id: key._id, key: key.key, createdAt: key.createdAt, isActive: key.isActive }}
               onUpdateStatus={updateApiKeyStatus}
               defaultExpanded={apiKeys.length === 1 || lastGeneratedKeyId === key._id}
             />
           ))
         ) : (
           <div className="text-center py-12 border-2 border-dashed rounded-xl text-muted-foreground">
-            {statusFilter === "all" 
+            {statusFilter === "all"
               ? "No API keys found. Generate one to get started!"
               : `No ${statusFilter} API keys found.`}
           </div>

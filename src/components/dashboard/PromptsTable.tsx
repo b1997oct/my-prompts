@@ -9,6 +9,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../ui
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import { ArrowLeftIcon, ExternalLinkIcon, RefreshCwIcon, FilterIcon, XIcon, Trash2Icon, DownloadIcon, ChevronLeftIcon, ChevronRightIcon, Settings2Icon, CheckIcon } from "lucide-react";
 import {
   AlertDialog,
@@ -54,9 +55,9 @@ export const PromptsTable: React.FC = () => {
   const [selectedColumns, setSelectedColumns] = useState<string[]>(["createdAt", "prompt"]);
 
   const toggleColumn = (columnId: string) => {
-    setSelectedColumns(prev => 
-      prev.includes(columnId) 
-        ? prev.filter(id => id !== columnId) 
+    setSelectedColumns(prev =>
+      prev.includes(columnId)
+        ? prev.filter(id => id !== columnId)
         : [...prev, columnId]
     );
   };
@@ -87,11 +88,12 @@ export const PromptsTable: React.FC = () => {
       const data = await deletePromptById(id);
       if (data.ok) {
         setPrompts(prev => prev.filter(p => p._id !== id));
+        toast.success("Prompt deleted successfully");
       } else {
-        alert(data.error || "Failed to delete prompt");
+        toast.error(data.error || "Failed to delete prompt");
       }
     } catch (err) {
-      alert("Error: " + getApiErrorMessage(err, "Failed to delete prompt"));
+      toast.error("Error: " + getApiErrorMessage(err, "Failed to delete prompt"));
     }
   };
 
@@ -184,12 +186,12 @@ export const PromptsTable: React.FC = () => {
 
   const exportToExcel = () => {
     if (filteredPrompts.length === 0) {
-      alert("No data to export");
+      toast.error("No data to export");
       return;
     }
 
     if (selectedColumns.length === 0) {
-      alert("Please select at least one column to export");
+      toast.error("Please select at least one column to export");
       return;
     }
 
@@ -219,7 +221,7 @@ export const PromptsTable: React.FC = () => {
     const worksheet = XLSX.utils.json_to_sheet(exportData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Prompts");
-    
+
     // Generate filename with timestamp
     const timestamp = moment().format("YYYY-MM-DD_HHmm");
     XLSX.writeFile(workbook, `prompts_export_${timestamp}.xlsx`);

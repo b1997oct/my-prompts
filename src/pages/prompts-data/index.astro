@@ -1,0 +1,94 @@
+---
+import connectToDatabase from "@/lib/mongodb/connect";
+import { Prompt, ApiKey } from "@/models";
+
+// Get token from URL params
+const token = Astro.url.searchParams.get("token");
+
+let prompts = [];
+let error = null;
+
+if (!token) {
+    error = "Error: Token is required in the URL (?token=YOUR_TOKEN)";
+} else {
+    // Connect to database
+    await connectToDatabase();
+
+    // Find the API key and associated user
+    const apiKeyDoc = await ApiKey.findOne({ key: token });
+
+    if (!apiKeyDoc || !apiKeyDoc.isActive) {
+        error = "Error: Invalid or inactive API Key";
+    } else {
+        // Fetch all prompts for this user (excluding soft-deleted ones)
+        prompts = await Prompt.find({
+            user: apiKeyDoc.user,
+            is_delete: { $ne: true },
+        }).sort({ createdAt: -1 });
+    }
+}
+---
+
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Prompts Data Table</title>
+    </head>
+    <body>
+        <h1>Prompts Data</h1>
+
+        {
+            error ? (
+                <p style="color: red; font-weight: bold;">{error}</p>
+            ) : (
+                <>
+                    <table border="1">
+                        <thead>
+                            <tr>
+                                <th>Created At</th>
+                                <th>Prompt</th>
+                                <th>Source</th>
+                                <th>Token Type</th>
+                                <th>Token ID</th>
+                                <th>Meta</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {prompts.map((p) => (
+                                <tr>
+                                    <td>
+                                        {p.createdAt
+                                            ? new Date(
+                                                  p.createdAt,
+                                              ).toLocaleString()
+                                            : "N/A"}
+                                    </td>
+                                    <td>{p.prompt}</td>
+                                    <td>{p.source || "N/A"}</td>
+                                    <td>
+                                        {p.tokenId === "session"
+                                            ? "Session"
+                                            : "API Key"}
+                                    </td>
+                                    <td>{p.tokenId || "N/A"}</td>
+                                    <td>
+                                        {p.meta
+                                            ? JSON.stringify(
+                                                  Object.fromEntries(p.meta),
+                                              )
+                                            : "N/A"}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                    {prompts.length === 0 && (
+                        <p>No prompts found for this user.</p>
+                    )}
+                </>
+            )
+        }
+    </body>
+</html>

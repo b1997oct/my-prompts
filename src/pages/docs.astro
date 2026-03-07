@@ -2,13 +2,17 @@
 import Layout from "../layouts/Layout.astro";
 import { ArrowLeftIcon, TerminalIcon, RocketIcon } from "lucide-react";
 
-const origin = Astro.url.origin.includes('localhost') ? 'https://my-prompts-beta.vercel.app' : Astro.url.origin;
+const origin = Astro.url.origin.includes("localhost")
+	? "https://my-prompts-beta.vercel.app"
+	: Astro.url.origin;
 ---
 
 <Layout title="API Documentation">
 	<div class="container mx-auto py-12 px-4 max-w-4xl">
 		<header class="mb-10 text-center">
-			<h1 class="text-4xl font-extrabold tracking-tight mb-2 flex items-center justify-center gap-3">
+			<h1
+				class="text-4xl font-extrabold tracking-tight mb-2 flex items-center justify-center gap-3"
+			>
 				<RocketIcon className="h-8 w-8 text-primary" />
 				API Documentation
 			</h1>
@@ -25,38 +29,52 @@ const origin = Astro.url.origin.includes('localhost') ? 'https://my-prompts-beta
 					Authentication
 				</h2>
 				<p class="mb-4">
-					All API requests must include your <strong>Personal API Key</strong> or <strong>ID Token</strong> in the <code>Authorization</code> header.
+					All API requests must include your <strong
+						>Personal API Key</strong
+					> or <strong>ID Token</strong> in the <code
+						>Authorization</code
+					> header.
 				</p>
 				<div class="bg-muted p-4 rounded-lg font-mono text-sm border">
 					Authorization: Bearer YOUR_API_KEY_OR_TOKEN
 				</div>
-                <p class="mt-4 text-sm text-muted-foreground">
-                    * You can generate your <strong>API Key</strong> in the Dashboard. <strong>Note:</strong> If you get an "Authentication service unavailable" error, please restart your dev server.
-                </p>
+				<p class="mt-4 text-sm text-muted-foreground">
+					* You can generate your <strong>API Key</strong> in the Dashboard.
+					<strong>Note:</strong> If you get an "Authentication service unavailable"
+					error, please restart your dev server.
+				</p>
 			</section>
 
 			<!-- Section 2: POST /api/promt -->
 			<section class="space-y-6">
 				<div class="flex items-center justify-between border-b pb-2">
 					<h2 class="text-2xl font-bold">Record a Prompt</h2>
-					<span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-bold rounded uppercase">POST</span>
+					<span
+						class="px-2 py-1 bg-green-100 text-green-800 text-xs font-bold rounded uppercase"
+						>POST</span
+					>
 				</div>
-				
+
 				<p>
-					Use this endpoint to record a prompt to your personal history.
+					Use this endpoint to record a prompt to your personal
+					history.
 				</p>
 
 				<div class="space-y-4">
 					<h3 class="text-lg font-semibold">Endpoint</h3>
-					<div class="bg-muted p-3 rounded-lg font-mono text-sm border">
+					<div
+						class="bg-muted p-3 rounded-lg font-mono text-sm border"
+					>
 						POST {origin}/api/promt
 					</div>
 				</div>
 
 				<div class="space-y-4">
 					<h3 class="text-lg font-semibold">Request Body</h3>
-					<div class="bg-muted p-3 rounded-lg font-mono text-sm border">
-<pre>{JSON.stringify({
+					<div
+						class="bg-muted p-3 rounded-lg font-mono text-sm border"
+					>
+						<pre>{JSON.stringify({
   "prompt": "Tell me a joke about robots",
   "source": "CLI",
   "model": "gpt-4",
@@ -67,38 +85,122 @@ const origin = Astro.url.origin.includes('localhost') ? 'https://my-prompts-beta
 
 				<div class="space-y-4">
 					<h3 class="text-lg font-semibold">Example: cURL</h3>
-					<div class="bg-muted p-4 rounded-lg font-mono text-sm border overflow-x-auto whitespace-pre">
-curl -X POST {origin}/api/promt \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_ID_TOKEN" \
-  -d '{`{
+					<div
+						class="bg-muted p-4 rounded-lg font-mono text-sm border overflow-x-auto whitespace-pre"
+					>
+						curl -X POST {origin}/api/promt \ -H "Content-Type:
+						application/json" \ -H "Authorization: Bearer
+						YOUR_ID_TOKEN" \ -d '{
+							`{
   "prompt": "Hello from curl!",
   "source": "Terminal"
-}`}'
+}`
+						}'
 					</div>
 				</div>
 
 				<div class="space-y-4">
-					<h3 class="text-lg font-semibold">Example: Fetch (JavaScript)</h3>
-					<div class="bg-muted p-4 rounded-lg font-mono text-sm border overflow-x-auto whitespace-pre">
-fetch("{origin}/api/promt", &#123;
-  method: "POST",
-  headers: &#123;
-    "Content-Type": "application/json",
-    "Authorization": "Bearer YOUR_ID_TOKEN"
-  &#125;,
-  body: JSON.stringify(&#123;
-    prompt: "I am a recorded prompt.",
-    source: "Web App"
-  &#125;)
-&#125;)
+					<h3 class="text-lg font-semibold">
+						Example: Fetch (JavaScript)
+					</h3>
+					<div
+						class="bg-muted p-4 rounded-lg font-mono text-sm border overflow-x-auto whitespace-pre"
+					>
+						fetch("{origin}/api/promt", &#123; method: "POST",
+						headers: &#123; "Content-Type": "application/json",
+						"Authorization": "Bearer YOUR_ID_TOKEN" &#125;, body:
+						JSON.stringify(&#123; prompt: "I am a recorded prompt.",
+						source: "Web App" &#125;) &#125;)
 					</div>
+				</div>
+			</section>
+			<!-- Section 3: AI Data Analysis -->
+			<section class="p-6 border rounded-xl bg-card space-y-6">
+				<h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
+					<span class="p-1 bg-purple-100 text-purple-700 rounded-lg">
+						<div class="h-6 w-6 text-purple-700">✨</div>
+					</span>
+					AI Analysis & Evaluation
+				</h2>
+
+				<p>
+					You can use your recorded prompt history to get professional
+					feedback from <strong>Gemini</strong> or <strong
+						>ChatGPT</strong
+					>. This helps you track your progress and improve your
+					prompt engineering skills.
+				</p>
+
+				<div class="space-y-4">
+					<h3 class="text-lg font-semibold">
+						1. Access Your Raw Data
+					</h3>
+					<p class="text-sm">
+						Open the data table in your browser using your API key:
+					</p>
+					<div
+						class="bg-muted p-3 rounded-lg font-mono text-sm border break-all"
+					>
+						{origin}/prompts-data?token=YOUR_API_KEY
+					</div>
+					<p class="text-xs text-muted-foreground italic">
+						* Replace <code>YOUR_API_KEY</code> with a valid key from
+						your dashboard.
+					</p>
+				</div>
+
+				<div class="space-y-4">
+					<h3 class="text-lg font-semibold">
+						2. Analyze with Gemini or ChatGPT
+					</h3>
+					<p class="text-sm">
+						Copy the data from the table (or the page source) and
+						paste it into an AI chat with the following instruction:
+					</p>
+
+					<div
+						class="bg-primary/5 p-4 rounded-lg border-l-4 border-primary"
+					>
+						<p
+							class="font-bold text-xs uppercase tracking-wider text-primary mb-2"
+						>
+							Recommended Prompt
+						</p>
+						<p class="text-sm italic leading-relaxed">
+							"I am sharing a list of my recent AI prompts. Please
+							analyze them and tell me how I'm doing. What are my
+							strengths and weaknesses in prompt engineering?
+							Where can I improve my communication style with AI
+							to get better results? Are there any recurring
+							patterns or mistakes I should be aware of?"
+						</p>
+					</div>
+				</div>
+
+				<div class="space-y-4 pt-2">
+					<h3 class="text-sm font-semibold">What can you learn?</h3>
+					<ul
+						class="list-disc list-inside space-y-1 text-sm text-muted-foreground"
+					>
+						<li>
+							Clarity and precision levels of your instructions
+						</li>
+						<li>Efficiency of your prompt structure</li>
+						<li>Context optimization suggestions</li>
+						<li>
+							Personalized best practices based on your actual
+							usage
+						</li>
+					</ul>
 				</div>
 			</section>
 		</main>
 
 		<footer class="mt-16 text-center">
-			<a href="/dashboard" class="inline-flex items-center gap-2 text-primary hover:underline font-medium">
+			<a
+				href="/dashboard"
+				class="inline-flex items-center gap-2 text-primary hover:underline font-medium"
+			>
 				<ArrowLeftIcon className="h-4 w-4" />
 				Back to Dashboard
 			</a>
