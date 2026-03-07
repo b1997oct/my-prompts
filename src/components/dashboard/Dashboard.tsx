@@ -16,6 +16,7 @@ export const Dashboard: React.FC = () => {
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<StatusFilterType>("all");
+  const [lastGeneratedKeyId, setLastGeneratedKeyId] = useState<string | null>(null);
 
   const fetchApiKeys = async () => {
     if (!user) return;
@@ -44,6 +45,7 @@ export const Dashboard: React.FC = () => {
       const data = await createApiKey();
       if (data?.ok) {
         setApiKeys((prev) => (data.key ? [data.key, ...prev] : prev));
+        if (data.key) setLastGeneratedKeyId(data.key._id);
       } else {
         alert("Error generating API key: " + (data?.error ?? "Unknown error"));
       }
@@ -145,6 +147,7 @@ export const Dashboard: React.FC = () => {
               key={key._id} 
               apiKey={{ id: key._id, key: key.key, createdAt: key.createdAt, isActive: key.isActive }} 
               onUpdateStatus={updateApiKeyStatus}
+              defaultExpanded={apiKeys.length === 1 || lastGeneratedKeyId === key._id}
             />
           ))
         ) : (

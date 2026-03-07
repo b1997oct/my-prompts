@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
-import moment  from "moment";
+import moment from "moment";
+import * as XLSX from "xlsx";
 import { useFirebaseAuth } from "@/hooks/useFirebaseAuth";
 import { deletePromptById, listPrompts, type Prompt } from "@/services/prompts.service";
 import { getApiErrorMessage } from "@/services/config";
@@ -8,9 +9,28 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../ui
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { cn } from "@/lib/utils";
-import { ArrowLeftIcon, ExternalLinkIcon, RefreshCwIcon, FilterIcon, XIcon, Trash2Icon } from "lucide-react";
+import { ArrowLeftIcon, ExternalLinkIcon, RefreshCwIcon, FilterIcon, XIcon, Trash2Icon, DownloadIcon, ChevronLeftIcon, ChevronRightIcon, Settings2Icon, CheckIcon } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../ui/alert-dialog";
 
 type DateRangeType = "all" | "1D" | "7D" | "custom";
+
+const EXPORT_COLUMNS = [
+  { id: "createdAt", label: "Created At" },
+  { id: "prompt", label: "Prompt" },
+  { id: "source", label: "Source" },
+  { id: "tokenType", label: "Token Type" },
+  { id: "tokenId", label: "Token ID" },
+  { id: "meta", label: "Meta" },
+];
 
 export const PromptsTable: React.FC = () => {
   const { user } = useFirebaseAuth();
@@ -18,12 +38,28 @@ export const PromptsTable: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+
   // Filter states
   const [sourceFilter, setSourceFilter] = useState<string>("all");
   const [tokenFilter, setTokenFilter] = useState<string>("all");
   const [dateRange, setDateRange] = useState<DateRangeType>("all");
   const [customStartDate, setCustomStartDate] = useState<string>("");
   const [customEndDate, setCustomEndDate] = useState<string>("");
+
+  // Export states
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const [selectedColumns, setSelectedColumns] = useState<string[]>(["createdAt", "prompt"]);
+
+  const toggleColumn = (columnId: string) => {
+    setSelectedColumns(prev => 
+      prev.includes(columnId) 
+        ? prev.filter(id => id !== columnId) 
+        : [...prev, columnId]
+    );
+  };
 
   const fetchPrompts = async () => {
     if (!user) return;
@@ -83,7 +119,7 @@ export const PromptsTable: React.FC = () => {
 
   // Filtered prompts
   const filteredPrompts = useMemo(() => {
-    return prompts.filter(p => {
+    const filtered = prompts.filter(p => {
       // Source filter
       if (sourceFilter !== "all" && p.source !== sourceFilter) {
         return false;
@@ -124,7 +160,19 @@ export const PromptsTable: React.FC = () => {
 
       return true;
     });
+
+    // Reset pagination when filter changes
+    setCurrentPage(1);
+    return filtered;
   }, [prompts, sourceFilter, tokenFilter, dateRange, customStartDate, customEndDate]);
+
+  // Paginated prompts
+  const paginatedPrompts = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredPrompts.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredPrompts, currentPage, itemsPerPage]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredPrompts.length / itemsPerPage));
 
   const resetFilters = () => {
     setSourceFilter("all");
@@ -132,6 +180,50 @@ export const PromptsTable: React.FC = () => {
     setDateRange("all");
     setCustomStartDate("");
     setCustomEndDate("");
+  };
+
+  const exportToExcel = () => {
+    if (filteredPrompts.length === 0) {
+      alert("No data to export");
+      return;
+    }
+
+    if (selectedColumns.length === 0) {
+      alert("Please select at least one column to export");
+      return;
+    }
+
+    const exportData = filteredPrompts.map(p => {
+      const row: any = {};
+      if (selectedColumns.includes("createdAt")) {
+        row["Created At"] = moment(p.createdAt).format("YYYY-MM-DD HH:mm:ss");
+      }
+      if (selectedColumns.includes("prompt")) {
+        row["Prompt"] = p.prompt;
+      }
+      if (selectedColumns.includes("source")) {
+        row["Source"] = p.source || "N/A";
+      }
+      if (selectedColumns.includes("tokenType")) {
+        row["Token Type"] = p.tokenId === 'session' ? 'Session' : 'API Key';
+      }
+      if (selectedColumns.includes("tokenId")) {
+        row["Token ID"] = p.tokenId || "N/A";
+      }
+      if (selectedColumns.includes("meta")) {
+        row["Meta"] = p.meta ? JSON.stringify(p.meta) : "N/A";
+      }
+      return row;
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Prompts");
+    
+    // Generate filename with timestamp
+    const timestamp = moment().format("YYYY-MM-DD_HHmm");
+    XLSX.writeFile(workbook, `prompts_export_${timestamp}.xlsx`);
+    setIsExportDialogOpen(false);
   };
 
   return (
@@ -144,14 +236,14 @@ export const PromptsTable: React.FC = () => {
           <h1 className="text-3xl font-bold">Recorded Prompts</h1>
         </div>
         <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" onClick={() => window.location.href = "/docs"} className="flex items-center gap-2">
-                <ExternalLinkIcon className="h-4 w-4" />
-                API Docs
-            </Button>
-            <Button variant="outline" size="sm" onClick={fetchPrompts} disabled={loading} className="flex items-center gap-2">
-                <RefreshCwIcon className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-                Refresh
-            </Button>
+          <Button variant="outline" size="sm" onClick={() => window.location.href = "/docs"} className="flex items-center gap-2">
+            <ExternalLinkIcon className="h-4 w-4" />
+            API Docs
+          </Button>
+          <Button variant="outline" size="sm" onClick={fetchPrompts} disabled={loading} className="flex items-center gap-2">
+            <RefreshCwIcon className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
         </div>
       </div>
 
@@ -239,9 +331,9 @@ export const PromptsTable: React.FC = () => {
             )}
 
             <div className="flex items-center gap-2">
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={resetFilters}
                 className="text-muted-foreground h-8"
               >
@@ -253,6 +345,55 @@ export const PromptsTable: React.FC = () => {
         </CardContent>
       </Card>
 
+      <div className="flex justify-end mb-4 gap-2">
+        <AlertDialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsExportDialogOpen(true)}
+            disabled={loading || filteredPrompts.length === 0}
+            className="h-8 text-xs flex items-center gap-2"
+          >
+            <DownloadIcon className="h-3.5 w-3.5" />
+            Export Table Data
+          </Button>
+          <AlertDialogContent size="sm">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Export Columns</AlertDialogTitle>
+              <AlertDialogDescription>
+                Select which columns you want to include in the Excel file.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="grid grid-cols-2 gap-2 py-4">
+              {EXPORT_COLUMNS.map((col) => (
+                <button
+                  key={col.id}
+                  type="button"
+                  onClick={() => toggleColumn(col.id)}
+                  className={cn(
+                    "flex items-center justify-between px-3 py-2 rounded-lg border text-xs transition-all text-left",
+                    selectedColumns.includes(col.id)
+                      ? "bg-primary/5 border-primary text-primary font-medium"
+                      : "bg-background border-input text-muted-foreground hover:bg-muted"
+                  )}
+                >
+                  {col.label}
+                  {selectedColumns.includes(col.id) && (
+                    <CheckIcon className="h-3 w-3" />
+                  )}
+                </button>
+              ))}
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={exportToExcel} disabled={selectedColumns.length === 0}>
+                Download .xlsx
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <div>
@@ -261,68 +402,105 @@ export const PromptsTable: React.FC = () => {
               {filteredPrompts.length} of {prompts.length} prompts shown
             </CardDescription>
           </div>
-          <FilterIcon className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
           {loading ? (
             <div className="text-center py-12 text-muted-foreground">Loading prompts...</div>
           ) : error ? (
             <div className="text-center py-12 text-red-500">{error}</div>
-          ) : filteredPrompts.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left">
-                <thead className="text-xs text-muted-foreground uppercase bg-muted/50">
-                  <tr>
-                    <th className="px-4 py-3">Created At</th>
-                    <th className="px-4 py-3">Prompt</th>
-                    <th className="px-4 py-3">Source</th>
-                    <th className="px-4 py-3">Token Auth</th>
-                    <th className="px-4 py-3">Meta</th>
-                    <th className="px-4 py-3 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {filteredPrompts.map((p) => (
-                    <tr key={p._id} className="hover:bg-muted/30 transition-colors group">
-                      <td className="px-4 py-3 whitespace-nowrap text-muted-foreground text-xs font-mono">
-                        {moment(p.createdAt).fromNow()}
-                      </td>
-                      <td className="px-4 py-3 font-medium max-w-md truncate" title={p.prompt}>
-                        {p.prompt}
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {p.source || "N/A"}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`px-2 py-0.5 rounded text-[10px] border ${p.tokenId === 'session' ? 'bg-blue-100/50 text-blue-700 border-blue-200' : 'bg-green-100/50 text-green-700 border-green-200'}`}>
-                          {p.tokenId === 'session' ? 'Session' : `Key: ${p.tokenId?.replace('key_', '').slice(0, 8)}`}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        {p.meta ? (
-                          <div className="flex gap-1 flex-wrap">
-                            {Object.entries(p.meta).map(([k, v]) => (
-                              <span key={k} className="px-1.5 py-0.5 bg-secondary text-[10px] rounded border">
-                                {k}: {String(v)}
-                              </span>
-                            ))}
-                          </div>
-                        ) : "N/A"}
-                      </td>
-                      <td className="px-4 py-3 text-right opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                          onClick={() => deletePrompt(p._id)}
-                        >
-                          <Trash2Icon className="h-4 w-4" />
-                        </Button>
-                      </td>
+          ) : paginatedPrompts.length > 0 ? (
+            <div className="space-y-4">
+              <div className="overflow-hidden border rounded-lg">
+                <table className="w-full text-sm text-left border-collapse">
+                  <thead className="text-xs text-muted-foreground uppercase bg-muted/50 border-b">
+                    <tr>
+                      <th className="px-4 py-3 font-semibold border-r">Created At</th>
+                      <th className="px-4 py-3 font-semibold border-r">Prompt</th>
+                      <th className="px-4 py-3 font-semibold border-r">Source</th>
+                      <th className="px-4 py-3 font-semibold border-r">Token Auth</th>
+                      <th className="px-4 py-3 font-semibold border-r">Meta</th>
+                      <th className="px-4 py-3 font-semibold text-right">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y">
+                    {paginatedPrompts.map((p) => (
+                      <tr key={p._id} className="hover:bg-muted/30 transition-colors group">
+                        <td className="px-4 py-4 whitespace-nowrap text-muted-foreground text-xs font-mono border-r">
+                          {moment(p.createdAt).fromNow()}
+                        </td>
+                        <td className="px-4 py-4 font-medium max-w-md border-r">
+                          <div className="line-clamp-2" title={p.prompt}>
+                            {p.prompt}
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 text-muted-foreground border-r">
+                          {p.source || "N/A"}
+                        </td>
+                        <td className="px-4 py-4 border-r">
+                          <span className={`px-2 py-0.5 rounded text-[10px] border ${p.tokenId === 'session' ? 'bg-blue-100/50 text-blue-700 border-blue-200' : 'bg-green-100/50 text-green-700 border-green-200'}`}>
+                            {p.tokenId === 'session' ? 'Session' : `Key: ${p.tokenId?.replace('key_', '').slice(0, 8)}`}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4 border-r">
+                          {p.meta ? (
+                            <div className="flex gap-1 flex-wrap">
+                              {Object.entries(p.meta).map(([k, v]) => (
+                                <span key={k} className="px-1.5 py-0.5 bg-secondary text-[10px] rounded border">
+                                  {k}: {String(v)}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground italic text-xs">N/A</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-4 text-right">
+                          <div className="flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                              onClick={() => deletePrompt(p._id)}
+                            >
+                              <Trash2Icon className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination Controls */}
+              <div className="flex items-center justify-between pt-4 border-t">
+                <div className="text-xs text-muted-foreground">
+                  Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredPrompts.length)} of {filteredPrompts.length} entries
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage(p => p - 1)}
+                  >
+                    <ChevronLeftIcon className="h-4 w-4" />
+                  </Button>
+                  <div className="text-xs font-medium px-2">
+                    Page {currentPage} of {totalPages}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    disabled={currentPage === totalPages}
+                    onClick={() => setCurrentPage(p => p + 1)}
+                  >
+                    <ChevronRightIcon className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
             </div>
           ) : (
             <div className="text-center py-12 border-2 border-dashed rounded-xl text-muted-foreground">

@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { CopyIcon, EyeIcon, EyeOffIcon, PowerIcon, PowerOffIcon, ChevronDownIcon, ChevronUpIcon, TerminalIcon, FileCodeIcon, SparklesIcon } from "lucide-react";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { Label } from "../ui/label";
+import moment from "moment";
 
 interface ApiKey {
   id: string;
@@ -14,19 +15,25 @@ interface ApiKey {
 interface ApiKeyItemProps {
   apiKey: ApiKey;
   onUpdateStatus: (id: string, isActive: boolean) => void;
+  defaultExpanded?: boolean;
 }
 
-export const ApiKeyItem: React.FC<ApiKeyItemProps> = ({ apiKey, onUpdateStatus }) => {
-  const [isVisible, setIsVisible] = useState(false);
+export const ApiKeyItem: React.FC<ApiKeyItemProps> = ({ apiKey, onUpdateStatus, defaultExpanded }) => {
+  const [isVisible, setIsVisible] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded ?? false);
   const [activeTab, setActiveTab] = useState<"rule" | "antigravity" | "setup">("rule");
+
+  useEffect(() => {
+    if (defaultExpanded) {
+      setIsExpanded(true);
+    }
+  }, [defaultExpanded]);
 
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const ruleFileContent = `---
 alwaysApply: true
 ---
-# Prompt History
 
 You **must** log every user prompt before doing anything else.
 
@@ -45,11 +52,7 @@ curl -X POST "${origin}/api/promt" \\
   }'
 \`\`\``;
 
-  const antigravityRuleContent = `---
-alwaysApply: true
----
-# Prompt History
-
+  const antigravityRuleContent = `
 You **must** log every user prompt before doing anything else.
 
 ## What to do every turn
@@ -112,7 +115,7 @@ curl -X POST "${origin}/api/promt" \\
             </Button>
           </div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span>Created on: {new Date(apiKey.createdAt).toLocaleString()}</span>
+            <span>Created on: {moment(apiKey.createdAt).fromNow()}</span>
             {apiKey.isActive ? (
               <Badge variant="default" className="text-[10px] bg-green-500 hover:bg-green-600 h-4 cursor-default">Active</Badge>
             ) : (
