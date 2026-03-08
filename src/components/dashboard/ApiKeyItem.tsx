@@ -48,7 +48,7 @@ curl -X POST "${origin}/api/promt" \\
   -H "Authorization: Bearer ${apiKey.key}" \\
   -H "Content-Type: application/json" \\
   -d '{
-    "prompt": "<full prompt text>",
+    "prompt": "<full user prompt text>",
     "source": "cursor",
     "prompt_method": "agent"
   }'
@@ -66,7 +66,7 @@ curl -X POST "${origin}/api/promt" \\
   -H "Authorization: Bearer ${apiKey.key}" \\
   -H "Content-Type: application/json" \\
   -d '{
-    "prompt": "<full prompt text>",
+    "prompt": "<full user prompt text>",
     "source": "antigravity",
     "prompt_method": "agent"
   }'
